@@ -289,7 +289,7 @@
         };
 
         const statusOptions = ['Interested', 'Not Interested', 'Call Later', 'Not Reachable', 'Joined Elsewhere'];
-        const apiKey = ""; // API key will be injected by the environment.
+        const apiKey = "AIzaSyDEW_W4dINlWmqORvWl1RL3_9wTGzhnF3s"; // API key will be injected by the environment.
 
         // --- DOM ELEMENTS ---
         const loginView = document.getElementById('login-view');
@@ -388,9 +388,7 @@
                 });
 
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    console.error('API Error Response:', errorData);
-                    throw new Error(`API returned status ${response.status}. ${errorData.error?.message || 'Unknown error.'}`);
+                    throw new Error(`API call failed with status: ${response.status}`);
                 }
 
                 const result = await response.json();
@@ -398,7 +396,7 @@
                 return candidate?.content?.parts?.[0]?.text || "No content generated.";
             } catch (error) {
                 console.error('Error calling Gemini API:', error);
-                return `Failed to generate content. Error: ${error.message}`;
+                return "Failed to generate content due to an error.";
             } finally {
                  if (buttonElement) {
                     buttonElement.disabled = false;
@@ -634,6 +632,3 @@
     </script>
 </body>
 </html>
-
-
-
