@@ -388,7 +388,9 @@
                 });
 
                 if (!response.ok) {
-                    throw new Error(`API call failed with status: ${response.status}`);
+                    const errorData = await response.json();
+                    console.error('API Error Response:', errorData);
+                    throw new Error(`API returned status ${response.status}. ${errorData.error?.message || 'Unknown error.'}`);
                 }
 
                 const result = await response.json();
@@ -396,7 +398,7 @@
                 return candidate?.content?.parts?.[0]?.text || "No content generated.";
             } catch (error) {
                 console.error('Error calling Gemini API:', error);
-                return "Failed to generate content due to an error.";
+                return `Failed to generate content. Error: ${error.message}`;
             } finally {
                  if (buttonElement) {
                     buttonElement.disabled = false;
@@ -632,3 +634,6 @@
     </script>
 </body>
 </html>
+
+
+
