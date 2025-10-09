@@ -11,13 +11,15 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
         }
         .auth-bg {
             background-color: #f3f4f6;
             background-image: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
         }
-        .modal-backdrop, #sidebar-overlay {
+        .modal-backdrop {
             transition: opacity 0.3s ease-in-out;
+            z-index: 50;
         }
         .modal-content {
             transform: translateY(-50px) scale(0.95);
@@ -27,7 +29,7 @@
             transform: translateY(0) scale(1);
         }
         #sidebar {
-            transition: all 0.3s ease-in-out;
+            transition: width 0.3s ease-in-out;
         }
         #main-content {
             transition: margin-left 0.3s ease-in-out;
@@ -57,6 +59,24 @@
         }
         .fade-in-up {
             animation: fadeInUp 0.5s ease-out forwards;
+        }
+        
+        #dashboard-view {
+            display: flex;
+            height: 100vh;
+        }
+
+        #sidebar.collapsed {
+            width: 5rem; /* 80px */
+        }
+         #sidebar.collapsed .sidebar-text {
+            display: none;
+        }
+        #sidebar.collapsed #desktop-collapse-btn i {
+            transform: rotate(180deg);
+        }
+        #main-content {
+            width: 100%;
         }
     </style>
 </head>
@@ -115,25 +135,25 @@
         </div>
 
         <!-- MAIN DASHBOARD VIEW (Initially hidden) -->
-        <div id="dashboard-view" class="hidden h-screen bg-gray-100">
-            <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden md:hidden"></div>
+        <div id="dashboard-view" class="hidden">
+            <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden md:hidden"></div>
             <!-- Sidebar -->
-            <aside id="sidebar" class="bg-gray-800 text-gray-200 w-64 fixed inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 z-30 sidebar">
-                 <div class="flex items-center justify-between px-4 py-7">
+            <aside id="sidebar" class="bg-gray-800 text-gray-200 w-64 fixed inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 z-40 sidebar flex flex-col">
+                 <div class="flex items-center justify-between px-4 py-7 flex-shrink-0">
                     <a href="#" class="text-white flex items-center space-x-2">
                         <i class="fa-solid fa-graduation-cap fa-2x"></i>
                         <span class="sidebar-text text-2xl font-extrabold">EAMCET</span>
                     </a>
                     <button id="desktop-collapse-btn" class="hidden md:block text-gray-400 hover:text-white">
-                        <i class="fa-solid fa-chevron-left"></i>
+                        <i class="fa-solid fa-chevron-left transition-transform duration-300"></i>
                     </button>
                 </div>
 
-                <nav id="sidebar-nav" class="px-2 space-y-2">
+                <nav id="sidebar-nav" class="px-2 space-y-2 flex-grow">
                     <!-- Nav links will be injected here -->
                 </nav>
 
-                <div class="absolute bottom-5 left-0 w-full px-4">
+                <div class="px-4 py-4 flex-shrink-0">
                     <div id="user-profile" class="text-center px-2">
                         <!-- User info injected here -->
                     </div>
@@ -144,10 +164,10 @@
             </aside>
 
             <!-- Main Content -->
-            <div id="main-content" class="flex-1 flex flex-col overflow-hidden md:ml-64">
+            <div id="main-content" class="flex-1 flex flex-col overflow-hidden">
                 <header class="bg-white shadow-sm flex items-center justify-between p-4 md:hidden">
                     <h1 class="text-xl font-bold text-gray-800">EAMCET Portal</h1>
-                    <button id="hamburger-btn" class="text-gray-500 focus:outline-none">
+                    <button id="hamburger-btn" class="text-gray-500 focus:outline-none z-50">
                         <i class="fa-solid fa-bars fa-lg"></i>
                     </button>
                 </header>
@@ -161,13 +181,11 @@
         </div>
         
         <!-- MODAL -->
-        <div id="summary-modal" class="modal-backdrop">
-            <div class="flex items-center justify-center min-h-screen">
-                <div class="relative w-full max-w-2xl p-6 mx-4 bg-white rounded-lg shadow-xl modal-content">
-                    <button onclick="closeModal()" class="absolute text-2xl text-gray-400 top-4 right-4 hover:text-gray-800 transition">&times;</button>
-                    <h3 id="modal-title" class="text-xl font-semibold text-gray-900">AI-Generated Content</h3>
-                    <div id="summary-content" class="mt-4 text-gray-600 prose max-w-none"></div>
-                </div>
+        <div id="summary-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 items-center justify-center p-4 modal-backdrop">
+            <div class="relative w-full max-w-2xl p-6 bg-white rounded-lg shadow-xl modal-content">
+                <button onclick="closeModal()" class="absolute text-2xl text-gray-400 top-4 right-4 hover:text-gray-800 transition">&times;</button>
+                <h3 id="modal-title" class="text-xl font-semibold text-gray-900">AI-Generated Content</h3>
+                <div id="summary-content" class="mt-4 text-gray-600 prose max-w-none"></div>
             </div>
         </div>
     </div>
@@ -395,14 +413,31 @@
         }
         
         // --- UI & RENDERING ---
-        function showInfoModal(title, content) { modalTitle.textContent = title; summaryContent.innerHTML = content; openModal(); }
-        function openModal() { summaryModal.style.display = 'flex'; setTimeout(() => summaryModal.classList.add('show'), 10); }
-        function closeModal() { summaryModal.classList.remove('show'); setTimeout(() => { summaryModal.style.display = 'none'; summaryContent.innerHTML = ''; }, 300); }
+        function showInfoModal(title, content) {
+            modalTitle.textContent = title;
+            summaryContent.innerHTML = content;
+            openModal();
+        }
+
+        function openModal() {
+            summaryModal.style.display = 'flex';
+            setTimeout(() => {
+                summaryModal.classList.add('show', 'opacity-100');
+            }, 10);
+        }
+
+        function closeModal() {
+            summaryModal.classList.remove('show', 'opacity-100');
+            setTimeout(() => {
+                summaryModal.style.display = 'none';
+                summaryContent.innerHTML = '';
+            }, 300);
+        }
 
         function renderDashboard(isUpdate = false) {
             const loggedInUser = JSON.parse(localStorage.getItem('loggedInUser'));
             if (!loggedInUser) { showLoginView(); return; }
-            if (!isUpdate) { authContainer.style.display = 'none'; dashboardView.style.display = 'block'; }
+            if (!isUpdate) { authContainer.style.display = 'none'; dashboardView.style.display = 'flex'; }
             
             document.getElementById('user-profile').innerHTML = `
                 <div class="font-semibold text-lg sidebar-text">${loggedInUser.name}</div>
@@ -410,13 +445,13 @@
             
             const nav = document.getElementById('sidebar-nav');
             if (loggedInUser.role === 'admin') {
-                nav.innerHTML = `<a href="#" class="sidebar-link flex items-center py-2.5 px-4 rounded-lg bg-gray-700 text-white"><i class="fa-solid fa-table-columns w-6"></i><span class="sidebar-text">Dashboard</span></a>`;
+                nav.innerHTML = `<a href="#" class="sidebar-link flex items-center py-2.5 px-4 rounded-lg bg-gray-700 text-white"><i class="fa-solid fa-table-columns w-8 text-center"></i><span class="sidebar-text ml-3">Dashboard</span></a>`;
                 adminContent.style.display = 'block'; staffContent.style.display = 'none';
-                renderAdminDashboard(loggedInUser);
+                if (!isUpdate) renderAdminDashboard(loggedInUser);
             } else {
-                 nav.innerHTML = `<a href="#" class="sidebar-link flex items-center py-2.5 px-4 rounded-lg bg-gray-700 text-white"><i class="fa-solid fa-users w-6"></i><span class="sidebar-text">My Students</span></a>`;
+                 nav.innerHTML = `<a href="#" class="sidebar-link flex items-center py-2.5 px-4 rounded-lg bg-gray-700 text-white"><i class="fa-solid fa-users w-8 text-center"></i><span class="sidebar-text ml-3">My Students</span></a>`;
                 adminContent.style.display = 'none'; staffContent.style.display = 'block';
-                renderStaffDashboard(loggedInUser);
+                if (!isUpdate) renderStaffDashboard(loggedInUser);
             }
         }
         
@@ -612,23 +647,7 @@
             }
 
             const toggleSidebar = () => {
-                const isCollapsed = sidebar.classList.contains('w-20');
-                if (isCollapsed) {
-                    sidebar.classList.remove('w-20');
-                    sidebar.classList.add('w-64');
-                    mainContent.classList.remove('md:ml-20');
-                    mainContent.classList.add('md:ml-64');
-                    desktopCollapseBtn.querySelector('i').classList.remove('fa-chevron-right');
-                    desktopCollapseBtn.querySelector('i').classList.add('fa-chevron-left');
-                } else {
-                    sidebar.classList.remove('w-64');
-                    sidebar.classList.add('w-20');
-                    mainContent.classList.remove('md:ml-64');
-                    mainContent.classList.add('md:ml-20');
-                    desktopCollapseBtn.querySelector('i').classList.remove('fa-chevron-left');
-                    desktopCollapseBtn.querySelector('i').classList.add('fa-chevron-right');
-                }
-                document.querySelectorAll('.sidebar-text').forEach(el => el.classList.toggle('hidden'));
+                sidebar.classList.toggle('collapsed');
             }
 
             desktopCollapseBtn.addEventListener('click', toggleSidebar);
